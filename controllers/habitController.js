@@ -1,9 +1,9 @@
-const habit = require('../models/habit');
+const Habit = require('../models/habit');
 
 exports.all = async (req, res) => {
     console.log("controller work");
     try{
-        const habits = await habit.findAll();
+        const habits = await Habit.findAll();
         res.json(habits);
     }catch(err){
         console.log(err);
@@ -15,7 +15,7 @@ exports.all = async (req, res) => {
 exports.create = async (req, res) => {
     try {
         const { name, description } =req.body || {};
-        const userHabit = await habit.create({
+        const habit = await Habit.create({
         name: 'habit1',
         description: 'bal bal bal'
     })
