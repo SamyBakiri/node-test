@@ -19,3 +19,7 @@ app.listen(port, () =>{
 sequelize.authenticate()
   .then(() => console.log('DEATHMATIO - DB connected'))
   .catch(err => console.error('DEATHMATIO - DB connection error:', err));
+
+// too lazy to deal with migrations
+sequelize.sync({ force: true });
+

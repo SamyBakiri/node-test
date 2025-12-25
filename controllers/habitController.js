@@ -14,15 +14,12 @@ exports.all = async (req, res) => {
 
 exports.create = async (req, res) => {
     try {
-        const { name, description } =req.body || {};
-        const userHabit = await habit.create({
-        name: 'habit1',
-        description: 'bal bal bal'
-    })
+        const { name, description } = req.body || {};
+        const userHabit = await habit.create({name, description})
     res.json({message : "done"});
     } catch (err) {
         console.log(err);
-        res.status(500).json({error: "failed "}); 
+        res.status(500).json({error: "Habit controller failed : "}); 
     }
     
 };
