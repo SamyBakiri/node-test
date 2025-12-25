@@ -4,7 +4,7 @@ exports.all = async (req, res) => {
     console.log("controller work");
     try{
         const habits = await habit.findAll();
-        res.json(habits.map(h => h.name));
+        res.json(habits);
     }catch(err){
         console.log(err);
         res.status(500).json({error: "failed "});
@@ -15,7 +15,7 @@ exports.all = async (req, res) => {
 exports.create = async (req, res) => {
     try {
         const { name, description } =req.body || {};
-        const habit = await habit.create({
+        const userHabit = await habit.create({
         name: 'habit1',
         description: 'bal bal bal'
     })
