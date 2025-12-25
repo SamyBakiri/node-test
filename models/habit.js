@@ -6,6 +6,7 @@ const habit = sequelize.define('habit', {
     description:{type: DataTypes.STRING, allowNull: true},
 
 },{
-    tableName: 'habits'
+    tableName: 'habits',
+    timestamps: false
 });
 module.exports = habit;
