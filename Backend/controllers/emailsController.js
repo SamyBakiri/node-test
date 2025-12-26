@@ -1,5 +1,5 @@
 const  {Email}= require('../models');
-const EmailQueue = require('../queues/emailqueue');
+const EmailQueue = require('../queues/EmailQueue');
 // id userId toEmail title body status scheduleAt sentAt
 
 
@@ -40,7 +40,13 @@ exports.one = async (req, res) => {
     
 };
 
-
+/*{
+  "toEmail": "receiver@example.com",
+  "title": "tessst!",
+  "body": "Hello, this is a test email.",
+  "scheduledAt": "2025-12-26T20:21:00Z"  
+}
+ */ 
 exports.create = async (req, res) => {
     try {
         const { toEmail, title, body, status, scheduledAt, sentAt } = req.body;
@@ -54,20 +60,19 @@ exports.create = async (req, res) => {
             scheduledAt,
             sentAt,
         });
-
-        // calcs the delay if scheduled
+          // calcs the delay if scheduled
         let delay = 0;
-        if (scheduledAt) {
-        const scheduledTime = new Date(scheduledAt).getTime();
-        const now = Date.now();
-        delay = Math.max(scheduledTime - now, 0); 
+        if (newEmail.scheduledAt) {
+            const scheduledDate = new Date(newEmail.scheduledAt);
+            delay = scheduledDate.getTime() - Date.now();
+            if (delay < 0) delay = 0;
         }
 
-        EmailQueue.add( // now email gets queued + it even has a delay which means SCHEDULING
-        'sendEmail',
-        { ...newEmail.dataValues },
-        { delay } 
-        );
+        // add to email queue
+        
+        await EmailQueue.add('sendEmail', 
+            { ...newEmail.dataValues },
+            { delay });
 
         res.json({ message: 'Email queued successfully' });
     } catch (err) {
