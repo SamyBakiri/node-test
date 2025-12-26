@@ -32,7 +32,8 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true,
         },
     },{
-        tableName: 'emails'
+        tableName: 'emails',
+        timestamps: false
     });
 
     Email.associate = (models) => {

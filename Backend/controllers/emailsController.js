@@ -5,7 +5,11 @@ const  {Email}= require('../models');
 exports.all = async (req, res) => {
     console.log("DEATHMATIO - GET request gotten");
     try{
-        const gottenEmails = await Email.findAll();
+        const gottenEmails = await Email.findAll({
+        attributes: {
+            exclude: ['createdAt', 'updatedAt']
+        }
+        });
         res.json(gottenEmails);
     }catch(err){
         console.log(err);
