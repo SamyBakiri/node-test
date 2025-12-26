@@ -1,7 +1,7 @@
 // id userId toEmail title body status scheduleAt sentAt
 
 module.exports = (sequelize, DataTypes) => {
-    const Email = sequelize.define('Emails', {
+    const Email = sequelize.define('Email', {
         id:{type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true},
         userId:{type: DataTypes.INTEGER, allowNull: false}, // sender
         toEmail: { // receiver (@email)
@@ -34,5 +34,11 @@ module.exports = (sequelize, DataTypes) => {
     },{
         tableName: 'emails'
     });
+
+    Email.associate = (models) => {
+        Email.belongsTo(models.User, {
+            foreignKey: 'userid'
+        });
+    };
     return Email
 };

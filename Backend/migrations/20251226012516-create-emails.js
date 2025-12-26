@@ -1,5 +1,6 @@
 'use strict';
 // npx sequelize-cli db:migrate
+// npx sequelize-cli migration:generate --name create-emails (generates migration bullshit)
 // 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
