@@ -5,17 +5,12 @@ const  {Email}= require('../models');
 exports.all = async (req, res) => {
     console.log("DEATHMATIO - GET request gotten");
     try{
-        const gottenEmails = await Email.findAll({
-        attributes: {
-            exclude: ['createdAt', 'updatedAt']
-        }
-        });
+        const gottenEmails = await Email.findAll();
         res.json(gottenEmails);
     }catch(err){
         console.log(err);
         res.status(500).json({error: "failed "});
-        }
-    
+    }
 };
 
 exports.create = async (req, res) => {
@@ -32,7 +27,13 @@ exports.create = async (req, res) => {
             scheduledAt,
             sentAt,
         });
-    res.json({message : "done"});
+        emailQueue.add( // now email gets queued + it even has a delay which means SCHEDULING
+        'sendEmail',
+        { ...newEmail.dataValues },
+        { delay: scheduledAt ? new Date(scheduledAt) - new Date() : 0 } 
+        );
+
+        res.json({ message: 'Email queued successfully' });
     } catch (err) {
         console.log(err);
         res.status(500).json({error: "failed "}); 

@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
 
     Email.associate = (models) => {
         Email.belongsTo(models.User, {
-            foreignKey: 'userid'
+            foreignKey: 'userid' // MAKE SURE THIS SHI EQUIV WITH USER!!!
         });
     };
     return Email
