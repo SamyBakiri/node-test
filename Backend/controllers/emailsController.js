@@ -1,4 +1,5 @@
 const  {Email}= require('../models');
+const EmailQueue = require('../queues/emailqueue');
 // id userId toEmail title body status scheduleAt sentAt
 
 
@@ -53,10 +54,19 @@ exports.create = async (req, res) => {
             scheduledAt,
             sentAt,
         });
-        emailQueue.add( // now email gets queued + it even has a delay which means SCHEDULING
+
+        // calcs the delay if scheduled
+        let delay = 0;
+        if (scheduledAt) {
+        const scheduledTime = new Date(scheduledAt).getTime();
+        const now = Date.now();
+        delay = Math.max(scheduledTime - now, 0); 
+        }
+
+        EmailQueue.add( // now email gets queued + it even has a delay which means SCHEDULING
         'sendEmail',
         { ...newEmail.dataValues },
-        { delay: scheduledAt ? new Date(scheduledAt) - new Date() : 0 } 
+        { delay } 
         );
 
         res.json({ message: 'Email queued successfully' });
@@ -107,3 +117,9 @@ exports.delete = async (req, res) => {
         
     }
 }
+
+
+// updates just the status attribute 
+exports.updateEmailStatus = async (id, fields) => {
+    return await Email.update(fields, { where: { id } });
+};

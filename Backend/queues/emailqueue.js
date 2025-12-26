@@ -11,6 +11,6 @@ const connection = new IORedis({
 });
 
 
-const emailQueue = new Queue('emailqueue', { connection });
+const EmailQueue = new Queue('emailqueue', { connection });
 
-module.exports = emailQueue;
+module.exports = EmailQueue;
