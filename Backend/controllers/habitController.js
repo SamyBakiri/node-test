@@ -16,7 +16,8 @@ exports.create = async (req, res) => {
     try {
         const { name, description } =req.body || {};
         const userId = req.user.id; // i got that from the jwt token in the middleware
-        const habit = await Habit.create({name , description, id: userId}) // cuz i named it in the db  id
+        console.log(userId);
+        const habit = await Habit.create({name , description, userid: userId}) // cuz i named it in the db  id
         res.json({message : "done"});
     } catch (err) {
         console.log(err);
