@@ -1,13 +1,12 @@
 'use strict';
 // npx sequelize-cli db:migrate
-// npx sequelize-cli migration:generate --name create-emails (generates migration bullshit)
+// npx sequelize-cli migration:generate --name create-emails (generates migration file)
 // 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
     await queryInterface.createTable('emails', {
       id:{type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true},
-      userId:{type: Sequelize.INTEGER, allowNull: false}, // sender
       toEmail: { // receiver (@email)
           type: Sequelize.STRING,
           allowNull: false,
@@ -35,6 +34,15 @@ module.exports = {
           type: Sequelize.DATE,
           allowNull: true,
       },
+      userId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      }
     });
   
   },
