@@ -1,11 +1,26 @@
-import backgroundImage from './assets/image.png'
-import './App.css'
+import { useState } from 'react'
+import SignUp from './SignUp'
+import Login from './Login'
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('signup') // Default to signup page
+
+  const handleNavigateToLogin = () => {
+    setCurrentPage('login')
+  }
+
+  const handleNavigateToSignUp = () => {
+    setCurrentPage('signup')
+  }
+
   return (
-    <div className="app-container" style={{ backgroundImage: `url(${backgroundImage})` }}>
-      <div className="rectangle"></div>
-    </div>
+    <>
+      {currentPage === 'signup' ? (
+        <SignUp onNavigateToLogin={handleNavigateToLogin} />
+      ) : (
+        <Login onNavigateToSignUp={handleNavigateToSignUp} />
+      )}
+    </>
   )
 }
 
