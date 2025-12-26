@@ -1,9 +1,11 @@
-// configs the redis server
-const { Redis } = require('ioredis');
+const IORedis = require('ioredis')
 
-const connection = new Redis({
-  host: '127.0.0.1',
-  port: 6379,
+// sets up redis connection (MAKE SURE REDIS IS CONNECTED AND INSTALLED!!!)
+// this is how to set up redis : https://redis.io/docs/latest/develop/tools/cli/#install-redis-cli
+const connection = new IORedis({ 
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  maxRetriesPerRequest: null,
 });
 
 module.exports = connection;
