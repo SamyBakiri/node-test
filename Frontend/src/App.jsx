@@ -4,6 +4,7 @@ import './App.css'
 function App() {
   return (
     <div className="app-container" style={{ backgroundImage: `url(${backgroundImage})` }}>
+      <div className="rectangle"></div>
     </div>
   )
 }
