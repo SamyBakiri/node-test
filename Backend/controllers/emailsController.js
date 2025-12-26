@@ -72,7 +72,11 @@ exports.create = async (req, res) => {
         
         await EmailQueue.add('sendEmail', 
             { ...newEmail.dataValues },
-            { delay });
+            { 
+                delay,
+                attempts: 3,          
+                backoff: { type: 'exponential', delay: 5000 }
+            });
 
         res.json({ message: 'Email queued successfully' });
     } catch (err) {

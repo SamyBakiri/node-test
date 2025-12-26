@@ -4,6 +4,7 @@ const { Worker } = require('bullmq');
     const connection = require('../config/redis');
     const nodemailer = require('nodemailer');
     const { updateEmailStatus } = require('../controllers/emailsController');
+const { error } = require('console');
     const emailWorker = new Worker(
     'EmailQueue',
     async job => {
@@ -17,6 +18,10 @@ const { Worker } = require('bullmq');
         if (!toEmail || !title || !body) {
             throw new Error("Job data is missing required fields");
         }
+        // tesing a failled job                 !!! UNCOMMENT TO TEST THE FAILLED JOB HANDLING !!!
+       // if(toEmail === "fail@gmail.com"){
+         //   throw new Error("intentional failled job for testing");
+        //}
 
         let testAccount = await nodemailer.createTestAccount();
 
@@ -43,8 +48,19 @@ const { Worker } = require('bullmq');
         await updateEmailStatus(id, { status: 'sent', sentAt: new Date()});
         } catch (err) {
             console.error("EMAILWORKER : Error sending email:", err);
-            throw err; // lets BullMQ retry
+            throw err; 
         }
     },
     { connection }
 );
+emailWorker.on('failed', (job, err) => {
+    console.log(`Job ${job.id} failed:`, err.message);
+});
+
+emailWorker.on('completed', job => {
+    console.log(`Job ${job.id} completed!`);
+});
+
+emailWorker.on('stalled', job => {
+    console.log(`Job ${job.id} stalled`);
+});
