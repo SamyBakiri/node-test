@@ -18,8 +18,6 @@ router.put('/users', authMiddleware, userController.update);
 router.delete('/users', authMiddleware, userController.delete);
 
 
-router.get('/habits', authMiddleware, habitController.all);
-router.post('/habits', authMiddleware, habitController.create);
 
 router.get('/emails', authMiddleware, emailController.all);
 router.get('/emails/:id', authMiddleware, emailController.one)
