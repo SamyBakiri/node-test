@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import SignUp from './SignUp'
 import Login from './Login'
+import EmailScheduler from './EmailScheduler'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('signup') // Default to signup page
@@ -13,12 +14,23 @@ function App() {
     setCurrentPage('signup')
   }
 
+  const handleNavigateToEmailScheduler = () => {
+    setCurrentPage('emailscheduler')
+  }
+
   return (
     <>
-      {currentPage === 'signup' ? (
+      {currentPage === 'signup' && (
         <SignUp onNavigateToLogin={handleNavigateToLogin} />
-      ) : (
-        <Login onNavigateToSignUp={handleNavigateToSignUp} />
+      )}
+      {currentPage === 'login' && (
+        <Login 
+          onNavigateToSignUp={handleNavigateToSignUp}
+          onNavigateToEmailScheduler={handleNavigateToEmailScheduler}
+        />
+      )}
+      {currentPage === 'emailscheduler' && (
+        <EmailScheduler />
       )}
     </>
   )
