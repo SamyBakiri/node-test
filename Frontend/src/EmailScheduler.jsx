@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Mail, Paperclip, Send } from 'lucide-react';
 
 export default function EmailScheduler({onNavigateToSignUp}) {
@@ -8,6 +8,12 @@ export default function EmailScheduler({onNavigateToSignUp}) {
   const [targetEmails, setTargetEmails] = useState('');
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [attachments, setAttachments] = useState([])
+  const [attachmentPreviews, setAttachmentPreviews] = useState([])
+  const [attachmentError, setAttachmentError] = useState('')
+  const fileInputRef = useRef(null);
+  const MAX_FILES = 5;
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   const username = useState('');
 
   const handleScheduleEmail = async (e) => {
@@ -26,30 +32,60 @@ export default function EmailScheduler({onNavigateToSignUp}) {
     .map(email => email.trim())
     .filter(email => email !== '');
     console.log("sending to emails : ", toEmailArray);
-    const scheduledAtISO = sendDateTime ? new Date(sendDateTime).toISOString() : null;
+    // normalize and validate date/time input
+    let scheduledAtISO = null;
+    if (sendDateTime) {
+      const d = new Date(sendDateTime);
+      if (Number.isNaN(d.getTime())) {
+        setError('Invalid send date/time');
+        setLoading(false);
+        return;
+      }
+      scheduledAtISO = d.toISOString();
+    }
     console.log("with date :", scheduledAtISO);
 
     try {
-      const response = await fetch('http://localhost:3000/api/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          toEmail: JSON.stringify(toEmailArray),
-          title: emailTitle,
-          body: emailSubject,
-          scheduledAt: scheduledAtISO
-        })
-      });
+      if (toEmailArray.length === 0) {
+        setError('Please provide at least one recipient');
+        setLoading(false);
+        return;
+      }
 
-      const data = await response.json()
+      let successCount = 0;
+      let failCount = 0;
 
-      if (response.ok) {
-        alert("Email sent!")
+      // Send one request per recipient (backend expects a single email string)
+      for (const recipient of toEmailArray) {
+        const formData = new FormData();
+        // backend expects `toEmail` to be a JSON-stringified array
+        formData.append('toEmail', JSON.stringify([recipient]));
+        formData.append('title', emailTitle);
+        formData.append('body', emailSubject);
+        if (scheduledAtISO) formData.append('scheduledAt', scheduledAtISO);
+        attachments.forEach(file => formData.append('attachments', file));
+
+        const response = await fetch('http://localhost:3000/api/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        if (response.ok) {
+          successCount++;
+        } else {
+          failCount++;
+          const data = await response.json().catch(() => ({}));
+          console.error('Failed sending to', recipient, data);
+        }
+      }
+
+      if (failCount === 0) {
+        alert(`Emails queued successfully (${successCount} sent)`);
       } else {
-        setError(data.message || 'Email could not be sent')
+        setError(`${successCount} succeeded, ${failCount} failed`);
       }
     } catch (err) {
       setError('Cannot connect to server. Make sure backend is running.')
@@ -58,6 +94,73 @@ export default function EmailScheduler({onNavigateToSignUp}) {
       setLoading(false)
     }
   };
+
+  // generate previews for selected files
+  const handleFiles = (e) => {
+    setAttachmentError('');
+    const newFiles = Array.from(e.target.files || []);
+
+    // merge with existing, but do not exceed MAX_FILES
+    let combined = [...attachments];
+    for (const f of newFiles) {
+      if (combined.length >= MAX_FILES) break;
+      // skip duplicates (same name & size)
+      if (!combined.some(x => x.name === f.name && x.size === f.size)) combined.push(f);
+    }
+
+    if (combined.length > MAX_FILES) {
+      combined = combined.slice(0, MAX_FILES);
+    }
+
+    // validate sizes
+    const oversized = combined.filter(f => f.size > MAX_FILE_SIZE);
+    if (oversized.length > 0) {
+      setAttachmentError(`File too large: ${oversized.map(f => f.name).join(', ')} (max ${formatFileSize(MAX_FILE_SIZE)})`);
+      // remove oversized files
+      combined = combined.filter(f => f.size <= MAX_FILE_SIZE);
+    }
+
+    setAttachments(combined);
+
+    // build previews
+    const readers = combined.map(file => new Promise((resolve) => {
+      if (file.type && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = () => resolve({ name: file.name, size: file.size, url: reader.result, type: file.type });
+        reader.readAsDataURL(file);
+      } else {
+        resolve({ name: file.name, size: file.size, url: null, type: file.type });
+      }
+    }));
+
+    Promise.all(readers).then(previews => setAttachmentPreviews(previews));
+
+    // reset file input so same file can be selected again if needed
+    if (fileInputRef && fileInputRef.current) fileInputRef.current.value = null;
+  };
+
+  const removeAttachment = (index) => {
+    const newFiles = attachments.slice();
+    newFiles.splice(index, 1);
+    setAttachments(newFiles);
+    const newPreviews = attachmentPreviews.slice();
+    newPreviews.splice(index, 1);
+    setAttachmentPreviews(newPreviews);
+    setAttachmentError('');
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+
+  const PDFIcon = ({ size = 48 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="2" y="2" width="20" height="20" rx="3" fill="#e11d48" />
+      <path d="M7 8h6v1H7zM7 11h6v1H7zM7 14h4v1H7z" fill="#fff" />
+      <text x="12" y="17" fontSize="8" fontWeight="700" textAnchor="middle" fill="#fff">PDF</text>
+    </svg>
+  );
 
   return (
     <div style={styles.container}>
@@ -129,8 +232,7 @@ export default function EmailScheduler({onNavigateToSignUp}) {
               <div style = {styles.formGroup}>
                 <label style={styles.label}>Send Date & Time</label>
                 <input
-                  type="date"
-                  placeholder="mm/dd/yyyy"
+                  type="datetime-local"
                   value={sendDateTime}
                   onChange={(e) => setSendDateTime(e.target.value)}
                   style={styles.input}
@@ -139,6 +241,64 @@ export default function EmailScheduler({onNavigateToSignUp}) {
             </div>
 
             
+
+            {/* Attachments input */}
+            <div>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Attachments</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}> 
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".png,.jpg,.jpeg,.pdf"
+                  onChange={(e) => handleFiles(e)}
+                  style={{ cursor: 'pointer' }}
+                  aria-label="Add attachments"
+                />
+
+                <div
+                  role="status"
+                  aria-live="polite"
+                  style={{ padding: '8px 12px', background: '#2563eb', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700 }}
+                  title={`${attachments.length} of ${MAX_FILES} files selected`}
+                >
+                  {attachments.length} / {MAX_FILES}
+                </div>
+              </div>
+
+              {attachmentError && (
+                <div style={{ marginTop: 8, color: '#b91c1c', fontSize: 13 }}>{attachmentError}</div>
+              )}
+
+              {attachmentPreviews.length > 0 && (
+                <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+                  {attachmentPreviews.map((p, i) => (
+                    <div key={i} style={{ border: '1px solid #e5e7eb', padding: 8, borderRadius: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <div style={{ width: 56, height: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {p.url ? (
+                          <img src={p.url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} />
+                        ) : (
+                          (() => {
+                            const ext = (p.name.split('.').pop() || '').toLowerCase();
+                            if (ext === 'pdf') return <PDFIcon size={56} />;
+                            return (
+                              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6', borderRadius: 6, fontSize: 14, fontWeight: 700 }}>{ext}</div>
+                            );
+                          })()
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.name}>{p.name}</div>
+                        <div style={{ fontSize: 12, color: '#6b7280' }}>{formatFileSize(p.size)}</div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                        <button onClick={() => removeAttachment(i)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}>Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Schedule Button */}
             <button onClick={handleScheduleEmail} style={styles.scheduleButton}>
