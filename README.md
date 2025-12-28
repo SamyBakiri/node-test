@@ -40,7 +40,7 @@ flowchart LR
     Process2 --> Database["Database"]
 ```
 
-## Summary :
+## Project :
 We built a marketing platform that provides email services to companies. The companies come to the platform and request their marketing email to be sent or scheduled to hundreds of users, the website takes charges of this task while also providing the companies useful analytics such as how many users received the email. 
 
 ## Problem :
@@ -62,7 +62,7 @@ flowchart LR
 
     subgraph Backend["Backend Server"]
         direction TB
-        be["Processes Email One-by-One"]
+        be["Processes Email One by One"]
     end
 
 
@@ -75,7 +75,8 @@ flowchart LR
 
 ## Solution : 
 A solution to this is defining a background job, which consists of the server taking
-each email and pushing them into a queue. Every email is devided into a batch, and each batch is processed seperately. The worker is tasked with pulling jobs from the queue and processing them. 
+each email and pushing them into a queue. The worker is tasked with pulling jobs from the queue and processing them. 
+Seperating emails into background jobs give concurency for the backend, which allows it the to also process other tasks seperate from emails. Resolving the above problem.
 
 ```mermaid
 flowchart LR
@@ -93,18 +94,15 @@ flowchart LR
       u1 -- "Send email 1" --> Backend
       un -- "Send email n" --> Backend
 
-    Backend --store--> Database
-    Database --enqueue emails --> QueueQ
+    Backend --enqueue emails --> QueueQ
 
     subgraph QueueQ [Queue]
       direction LR
-      Q1["Email 1"] -.-> Q2["Email 2"] -.-> Q3["Email n"]
+      Q1["Email 1"]  -.-> Q3["Email n"]
     end
     QueueQ --> Process1["Worker 1"]
     Process1 -- Processes and Sends Emails --> NodeMailer
 ```
-
-Background jobs give concurency for the backend, which allows it the to also process other tasks seperate from emails. Resolving the above problem.
 
 ## Tech stack:
 ### Backend :
