@@ -7,7 +7,8 @@
     "devstart": "nodemon server.js",
     "queue": "nodemon workers/emailWorker.js",
     "dev": "concurrently \"npm run devstart\" \"npm run queue\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +17,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.66.3",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "ioredis": "^5.8.2",
