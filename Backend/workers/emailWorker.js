@@ -25,19 +25,20 @@ const getTransporter = require('../config/emailTransporter');
        // if(toEmail === "fail@gmail.com"){
          //   throw new Error("intentional failled job for testing");
         //}
-        let testAccount = await nodemailer.createTestAccount();
-        let attachmentsArray = [];
+
+        
+        //let testAccount = await nodemailer.createTestAccount();
         
         let transporter = nodemailer.createTransport({
-            host: testAccount.smtp.host,
-            port: testAccount.smtp.port,
-            secure: testAccount.smtp.secure,
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            secure: process.env.SMTP_SECURE,
             auth: {
-                user: testAccount.user,
-            pass: testAccount.pass
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
             }
         });
-
+        let attachmentsArray = [];
         if(attachments){
                 attachmentsArray = attachments.map(file =>({
                 filename: file.originalname,
@@ -53,7 +54,7 @@ const getTransporter = require('../config/emailTransporter');
         });
 
         console.log(`EMAILWORKER : Email sent to ${toEmail}`);
-        console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
+        //console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
         console.log(Array.isArray(attachments));
         if (Array.isArray(attachments)) {
             for (const file of attachments) {
@@ -77,7 +78,7 @@ const getTransporter = require('../config/emailTransporter');
         }
     },
     { connection,
-    concurrency: 5
+    concurrency: process.env.CONCURRENCY
     }
     
 );
