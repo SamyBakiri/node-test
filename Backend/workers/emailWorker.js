@@ -78,7 +78,7 @@ const getTransporter = require('../config/emailTransporter');
         }
     },
     { connection,
-    concurrency: process.env.CONCURRENCY
+        concurrency: 5
     }
     
 );

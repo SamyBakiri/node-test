@@ -47,7 +47,7 @@ export default function EmailScheduler({onNavigateToSignUp}) {
       const data = await response.json()
 
       if (response.ok) {
-        alert("EMAIL SENT!!")
+        alert("Email sent!")
       } else {
         setError(data.message || 'Email could not be sent')
       }
