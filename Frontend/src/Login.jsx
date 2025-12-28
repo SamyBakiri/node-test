@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 
-function Login({ onNavigateToSignUp }) {
+function Login({ onNavigateToSignUp, onNavigateToEmailScheduler }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -25,11 +25,10 @@ function Login({ onNavigateToSignUp }) {
 
       if (response.ok) {
         // Save token to localStorage
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
-        
-        alert('Login successful!')
-        // For now, just show success. We'll add navigation later
+        JSON.stringify(data);
+        localStorage.setItem('token', data.jwtToken);
+        alert('Login successful! Token: ' + data.jwtToken);
+        onNavigateToEmailScheduler()
       } else {
         setError(data.message || 'Login failed')
       }
