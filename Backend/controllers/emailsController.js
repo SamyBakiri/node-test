@@ -1,4 +1,5 @@
 const  {Email}= require('../models');
+const user = require('../models/user');
 const EmailQueue = require('../queues/EmailQueue');
 // id userId toEmail title body status scheduleAt sentAt
 
@@ -41,7 +42,7 @@ exports.one = async (req, res) => {
 };
 
 /*{
-  "toEmail": "receiver@example.com",
+  "toEmail": ["receiver@example.com","email2@gmail.com", "email3@gmail.com"],
   "title": "tessst!",
   "body": "Hello, this is a test email.",
   "scheduledAt": "2025-12-26T20:21:00Z"  
@@ -51,34 +52,49 @@ exports.create = async (req, res) => {
     try {
         const { toEmail, title, body, status, scheduledAt, sentAt } = req.body;
         const userId = req.user.id;
-        const newEmail = await Email.create({
-            userId: userId,
-            toEmail,
+        if (!Array.isArray(toEmail) || toEmail.length === 0) {
+        return res.status(400).json({ error: 'toEmail must be a non-empty array' });
+        }
+
+        const emailRows = toEmail.map(email => ({
+            userId,
+            toEmail: email,
             title,
             body,
-            status,
-            scheduledAt,
-            sentAt,
-        });
+            status: 'pending',
+            scheduledAt
+        }))
+
+        const emails = await Email.bulkCreate(
+            emailRows,
+            { returning: true }
+        );
           // calcs the delay if scheduled
         let delay = 0;
-        if (newEmail.scheduledAt) {
-            const scheduledDate = new Date(newEmail.scheduledAt);
+        if (scheduledAt) {
+            const scheduledDate = new Date(scheduledAt);
             delay = scheduledDate.getTime() - Date.now();
             if (delay < 0) delay = 0;
         }
 
         // add to email queue
         
-        await EmailQueue.add('sendEmail', 
-            { ...newEmail.dataValues },
-            { 
-                delay,
-                attempts: 3,          
-                backoff: { type: 'exponential', delay: 5000 }
-            });
+        await EmailQueue.addBulk(
+            emails.map(email => ({
+                name: 'sendEmail',
+                data: email.dataValues,
+                opts: { delay,
+                    attempts: 3,
+                    backoff: {type: 'exponential',
+                            delay: 10000
+                        }
+                }
+                }))
+        )
 
-        res.json({ message: 'Email queued successfully' });
+        res.json({
+            message: `${emails.length} emails queued successfully`,
+        });
     } catch (err) {
         console.log(err);
         res.status(500).json({error: "failed "}); 
