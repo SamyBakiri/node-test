@@ -48,7 +48,7 @@ const { error } = require('console');
         await updateEmailStatus(id, { status: 'sent', sentAt: new Date()});
         } catch (err) {
             console.error("EMAILWORKER : Error sending email:", err);
-            throw err; 
+            throw err; //to let the worker try again  
         }
     },
     { connection }
