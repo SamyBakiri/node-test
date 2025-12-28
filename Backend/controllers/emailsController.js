@@ -1,5 +1,6 @@
 const  {Email}= require('../models');
 const user = require('../models/user');
+const connection = require('../config/redis');
 const EmailQueue = require('../queues/EmailQueue');
 // id userId toEmail title body status scheduleAt sentAt
 
@@ -25,9 +26,6 @@ exports.one = async (req, res) => {
     try{
         const { id } = req.params;
         const email = await Email.findOne({
-        attributes: {
-            exclude: ['createdAt', 'updatedAt']
-            },
             where:{
                 userId: req.user.id,
                 id
@@ -50,11 +48,19 @@ exports.one = async (req, res) => {
  */ 
 exports.create = async (req, res) => {
     try {
-        const { toEmail, title, body, status, scheduledAt, sentAt } = req.body;
+        let { toEmail, title, body, status, scheduledAt, sentAt } = req.body;
         const userId = req.user.id;
+
+        toEmail = JSON.parse(toEmail);
+
         if (!Array.isArray(toEmail) || toEmail.length === 0) {
         return res.status(400).json({ error: 'toEmail must be a non-empty array' });
         }
+        const attachments = req.files || [];
+        const fileUsage = toEmail.length;
+        for (const file of attachments) {
+            await connection.set(`file:${file.path}`, fileUsage);
+            }
 
         const emailRows = toEmail.map(email => ({
             userId,
@@ -82,7 +88,9 @@ exports.create = async (req, res) => {
         await EmailQueue.addBulk(
             emails.map(email => ({
                 name: 'sendEmail',
-                data: email.dataValues,
+                data:{ ...email.dataValues,
+                    attachments
+                },
                 opts: { delay,
                     attempts: 3,
                     backoff: {type: 'exponential',
