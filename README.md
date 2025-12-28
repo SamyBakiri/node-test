@@ -104,11 +104,41 @@ flowchart LR
     Process1 -- Processes and Sends Emails --> NodeMailer
 ```
 
+## User Authentication :
+We implemented a JWT authentication in which users submit their name, email, and password.
+--show graph of how users do this--
+
+
+--show image of authentication in site--
+
+## Database :
+The database contais user information, as well as emails. 
+--represent the schemas in graph--
+Emails Schema :
+- ID
+- UserID
+- toEmail
+- title
+- body
+- status
+- scheduleAt
+- sentAt
+
+Users Schema:
+- ID
+- name
+- email
+- password
+
+
 ## Tech stack:
+
 ### Backend :
-- NodeJS
-- ExpressJS
-- MariaDB
-- Redis + BullMQ
+- **Framework:** NodeJS <img src="https://cdn.worldvectorlogo.com/logos/nodejs-icon.svg" width="20" height="20" />  
+- **API Routes:** ExpressJS <img src="https://cdn.worldvectorlogo.com/logos/express-109.svg" width="20" height="20" />  
+- **Database :** MariaDB <img src="https://cdn.worldvectorlogo.com/logos/mariadb.svg" width="20" height="20" />  
+- **Queue + Worker Implementation :** Redis + BullMQ <img src="https://img.icons8.com/color/48/000000/redis.png" width="20" height="20" /> 
+
 ### Frontend :
-- React 
+- **Framework:** React <img src="https://cdn.worldvectorlogo.com/logos/react-2.svg" width="20" height="20" />  
+
