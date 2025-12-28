@@ -106,29 +106,42 @@ flowchart LR
 
 ## User Authentication :
 We implemented a JWT authentication in which users submit their name, email, and password.
---show graph of how users do this--
-
-
---show image of authentication in site--
+```mermaid
+graph LR
+    A[User] --> B[Submit name, email, and password]
+    B --> C[Backend Authentication Endpoint]
+    C --> D[Validate Credentials]
+    D -->|Valid| E[Generate JWT Token]
+    D -->|Invalid| F[Return Error Message]
+    E --> G[Return JWT Token to User]
+```
 
 ## Database :
-The database contais user information, as well as emails. 
---represent the schemas in graph--
-Emails Schema :
-- ID
-- UserID
-- toEmail
-- title
-- body
-- status
-- scheduleAt
-- sentAt
+The database is MariaDB/MySQL used from XXAMP, the tables are Users and Emails. Users contain their id, name, email, and password. Emails contains an id, the userID, the recipient's email, title, body, status, the schedule time and date, and the date of sending.
 
-Users Schema:
-- ID
-- name
-- email
-- password
+```mermaid
+erDiagram 
+    USERS {
+        int ID PK
+        string name
+        string email
+        string password
+    }
+    
+    EMAILS {
+        int ID PK
+        int UserID FK
+        string toEmail
+        string title
+        string body
+        string status
+        datetime scheduleAt
+        datetime sentAt
+    }
+
+    USERS ||--o{ EMAILS : "has"
+```
+
 
 
 ## Tech stack:
@@ -140,5 +153,22 @@ Users Schema:
 - **Queue + Worker Implementation :** Redis + BullMQ <img src="https://img.icons8.com/color/48/000000/redis.png" width="20" height="20" /> 
 
 ### Frontend :
-- **Framework:** React <img src="https://cdn.worldvectorlogo.com/logos/react-2.svg" width="20" height="20" />  
+- **Framework:** React <img src="https://cdn.worldvectorlogo.com/logos/react-2.svg" width="20" height="20" />
+
+## Running the Project
+
+Follow these steps to run the application:
+
+### Backend
+```bash
+cd Backend
+npm install
+npm run dev
+```
+### Frontend
+```bash
+cd Frontend
+npm install
+npm run dev
+```
 
