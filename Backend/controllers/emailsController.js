@@ -48,7 +48,7 @@ exports.one = async (req, res) => {
  */ 
 exports.create = async (req, res) => {
     try {
-        let { toEmail, title, body, status, scheduledAt, sentAt } = req.body;
+        let { toEmail, title, body, scheduledAt, sentAt } = req.body;
         const userId = req.user.id;
 
         toEmail = JSON.parse(toEmail);
