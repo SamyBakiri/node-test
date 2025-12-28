@@ -26,7 +26,7 @@ const getTransporter = require('../config/emailTransporter');
          //   throw new Error("intentional failled job for testing");
         //}
 
-        
+
         //let testAccount = await nodemailer.createTestAccount();
         
         let transporter = nodemailer.createTransport({
