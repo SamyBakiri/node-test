@@ -1,2 +1,5 @@
 Backend/.env
+Backend/.env.*
+!Backend/.env.example
 Backend/node_modules
+Backend/uploads
