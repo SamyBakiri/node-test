@@ -1,19 +1,62 @@
 import React, { useState } from 'react';
 import { Mail, Paperclip, Send } from 'lucide-react';
 
-export default function EmailScheduler() {
+export default function EmailScheduler({onNavigateToSignUp}) {
   const [emailTitle, setEmailTitle] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [sendDateTime, setSendDateTime] = useState('');
   const [targetEmails, setTargetEmails] = useState('');
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const username = useState('');
 
-  const handleScheduleEmail = () => {
+  const handleScheduleEmail = async (e) => {
+    const token = localStorage.getItem('token');
+    alert("SENDING EMAIL, TOKEN : " + token)
     console.log('Email scheduled:', {
       emailTitle,
       emailSubject,
       sendDateTime,
       targetEmails
     });
+    setLoading(true)
+
+    const toEmailArray = targetEmails
+    .split('\n')
+    .map(email => email.trim())
+    .filter(email => email !== '');
+    console.log("sending to emails : ", toEmailArray);
+    const scheduledAtISO = sendDateTime ? new Date(sendDateTime).toISOString() : null;
+    console.log("with date :", scheduledAtISO);
+
+    try {
+      const response = await fetch('http://localhost:3000/api/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          toEmail: JSON.stringify(toEmailArray),
+          title: emailTitle,
+          body: emailSubject,
+          scheduledAt: scheduledAtISO
+        })
+      });
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert("Email sent!")
+      } else {
+        setError(data.message || 'Email could not be sent')
+      }
+    } catch (err) {
+      setError('Cannot connect to server. Make sure backend is running.')
+      console.error('EMAIL error:', err)
+    } finally {
+      setLoading(false)
+    }
   };
 
   return (
@@ -27,11 +70,17 @@ export default function EmailScheduler() {
             </div>
             
             <h1 style={styles.welcomeText}>Welcome back,</h1>
-            <h2 style={styles.nameText}>John Doe</h2>
+            <h2 style={styles.nameText}>{username}</h2>
             
             <p style={styles.description}>
               Schedule your emails and reach your audience at the perfect time. Manage your campaigns efficiently and track your success.
             </p>
+
+            {/*sign out button */}
+            <button onClick={onNavigateToSignUp} style={styles.signOutButton}>
+              <Send size={18} />
+              <span style={styles.buttonText}>Sign Out</span>
+            </button>
           </div>
         </div>
 
@@ -55,38 +104,38 @@ export default function EmailScheduler() {
             {/* Email Subject */}
             <div style={styles.formGroup}>
               <label style={styles.label}>Email Subject</label>
-              <input
-                type="text"
-                placeholder="Enter email subject"
+              <textarea
+                placeholder="Write your subject..."
                 value={emailSubject}
-                rows={3} 
                 onChange={(e) => setEmailSubject(e.target.value)}
-                style={styles.input}
+                rows={6}
+                style={styles.textarea}
               />
             </div>
 
             {/* Send Date & Time */}
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Send Date & Time</label>
-              <input
-                type="date"
-                placeholder="mm/dd/yyyy"
-                value={sendDateTime}
-                onChange={(e) => setSendDateTime(e.target.value)}
-                style={styles.input}
-              />
-            </div>
-
-            {/* Target Emails */}
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Target Emails</label>
-              <textarea
-                placeholder="Enter email addresses (one per line)&#10;example1@email.com&#10;example2@email.com"
-                value={targetEmails}
-                onChange={(e) => setTargetEmails(e.target.value)}
-                rows={3}
-                style={styles.textarea}
-              />
+            <div style={styles.flexForm}>
+              {/* Target Emails */}
+              <div style = {styles.formGroup}>
+                <label style={styles.label}>Target Emails</label>
+                <textarea
+                  placeholder="Enter email addresses (one per line)&#10;example1@email.com&#10;example2@email.com"
+                  value={targetEmails}
+                  onChange={(e) => setTargetEmails(e.target.value)}
+                  rows={3}
+                  style={styles.textarea}
+                />
+              </div>
+              <div style = {styles.formGroup}>
+                <label style={styles.label}>Send Date & Time</label>
+                <input
+                  type="date"
+                  placeholder="mm/dd/yyyy"
+                  value={sendDateTime}
+                  onChange={(e) => setSendDateTime(e.target.value)}
+                  style={styles.input}
+                />
+              </div>
             </div>
 
             
@@ -96,6 +145,18 @@ export default function EmailScheduler() {
               <Send size={18} />
               <span style={styles.buttonText}>Schedule Email</span>
             </button>
+            {error && (
+              <div style={{
+                padding: '10px',
+                backgroundColor: '#fee2e2',
+                color: '#991b1b',
+                borderRadius: '8px',
+                marginBottom: '15px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -105,22 +166,25 @@ export default function EmailScheduler() {
 
 const styles = {
   container: {
-    minHeight: '100vh',
     backgroundColor: '#090088',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: '16px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    width: '100vw',
+    height: '100vh',
+    boxSizing: 'border-box'
   },
   card: {
     display: 'flex',
-    maxWidth: '1200px',
+    maxWidth: '1400px',
     width: '100%',
+    height: '95%',
     backgroundColor: 'white',
     borderRadius: '16px',
     boxShadow: '5 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-    overflow: 'hidden'
+    overflow: 'auto',
   },
   leftPanel: {
     width: '40%',
@@ -129,7 +193,7 @@ const styles = {
     padding: '32px',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   iconCircle: {
     width: '64px',
@@ -213,7 +277,8 @@ const styles = {
   },
   formGroup: {
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    width: '100%'
   },
   label: {
     fontSize: '14px',
@@ -277,7 +342,28 @@ const styles = {
     marginTop: '8px',
     transition: 'all 0.2s'
   },
+  signOutButton: {
+    width: '100%',
+    padding: '12px 16px',
+    backgroundColor: '#03102cff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontWeight: '600',
+    fontSize: '14px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    transition: 'all 0.2s'
+  },
   buttonText: {
     display: 'inline-block'
-  }
+  },
+  flexForm: {
+    display: 'flex',
+    gap: '50px',
+  },
+
 };
