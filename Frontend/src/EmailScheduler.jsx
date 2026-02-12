@@ -52,40 +52,35 @@ export default function EmailScheduler({onNavigateToSignUp}) {
         return;
       }
 
-      let successCount = 0;
-      let failCount = 0;
+      // Send all emails in a single API call
+      const formData = new FormData();
+      formData.append('toEmail', JSON.stringify(toEmailArray));
+      formData.append('title', emailTitle);
+      formData.append('body', emailSubject);
+      if (scheduledAtISO) formData.append('scheduledAt', scheduledAtISO);
+      attachments.forEach(file => formData.append('attachments', file));
 
-      // Send one request per recipient (backend expects a single email string)
-      for (const recipient of toEmailArray) {
-        const formData = new FormData();
-        // backend expects `toEmail` to be a JSON-stringified array
-        formData.append('toEmail', JSON.stringify([recipient]));
-        formData.append('title', emailTitle);
-        formData.append('body', emailSubject);
-        if (scheduledAtISO) formData.append('scheduledAt', scheduledAtISO);
-        attachments.forEach(file => formData.append('attachments', file));
+      const response = await fetch('http://localhost:3000/api/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
 
-        const response = await fetch('http://localhost:3000/api/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
-        });
-
-        if (response.ok) {
-          successCount++;
-        } else {
-          failCount++;
-          const data = await response.json().catch(() => ({}));
-          console.error('Failed sending to', recipient, data);
-        }
-      }
-
-      if (failCount === 0) {
-        alert(`Emails queued successfully (${successCount} sent)`);
+      if (response.ok) {
+        alert(`Emails queued successfully (${toEmailArray.length} sent)`);
+        setEmailTitle('');
+        setEmailSubject('');
+        setSendDateTime('');
+        setTargetEmails('');
+        setAttachments([]);
+        setAttachmentPreviews([]);
+        setError('');
       } else {
-        setError(`${successCount} succeeded, ${failCount} failed`);
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || 'Failed to queue emails');
+        console.error('Failed sending emails', data);
       }
     } catch (err) {
       setError('Cannot connect to server. Make sure backend is running.')
